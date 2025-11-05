@@ -18,8 +18,7 @@ public class TipoDonacion {
   @Column(name = "nombre", nullable = false, length = 50)
   private String nombre;
 
-  @Lob
-  @Column(name = "descripcion")
+  @Column(name = "descripcion", length = 500)
   private String descripcion;
 
   @ColumnDefault("1")

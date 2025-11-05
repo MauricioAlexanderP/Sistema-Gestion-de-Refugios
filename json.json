@@ -1,0 +1,14 @@
+{
+  "animal": {
+    "id": 8
+  },
+  "adoptante": {
+    "id": 2
+  },
+  "fechaSolicitud": "2025-10-25",
+  "fechaAprobacion": "2025-10-28",
+  "estado": {
+    "id": 2
+  },
+  "observaciones": "Adopción aprobada - Luna",
+}
