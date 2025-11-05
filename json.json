@@ -1,14 +1,13 @@
 {
-  "animal": {
-    "id": 8
+  "nombre": "test",
+  "tipo": {
+    "id": 1
   },
-  "adoptante": {
-    "id": 2
+  "cantidad": 150,
+  "unidad": "kg",
+  "refugio": {
+    "id": 3
   },
-  "fechaSolicitud": "2025-10-25",
-  "fechaAprobacion": "2025-10-28",
-  "estado": {
-    "id": 2
-  },
-  "observaciones": "Adopción aprobada - Luna",
+  "stockMinimo": 10,
+  "fechaIngreso": "2025-10-15"
 }
