@@ -6,6 +6,7 @@ public class LoginResponse {
   private boolean success;
   private String message;
   private UsuarioDto usuario;
+  private String token;
 
   // Constructors
   public LoginResponse() {
@@ -45,6 +46,14 @@ public class LoginResponse {
 
   public void setUsuario(UsuarioDto usuario) {
     this.usuario = usuario;
+  }
+
+  public String getToken() {
+    return token;
+  }
+
+  public void setToken(String token) {
+    this.token = token;
   }
 
   // DTO interno para no exponer la contraseña

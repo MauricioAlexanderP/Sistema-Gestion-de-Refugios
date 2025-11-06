@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import mp.project.gestionrefugios.config.JwtUtil;
 import mp.project.gestionrefugios.dto.LoginRequest;
 import mp.project.gestionrefugios.dto.LoginResponse;
 import mp.project.gestionrefugios.model.Usuarios;
@@ -31,6 +32,9 @@ public class UsuariosController {
   @Autowired
   private PersonalService personalService;
 
+  @Autowired
+  private JwtUtil jwtUtil;
+
   // Endpoint de autenticación
   @PostMapping("/login")
   public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
@@ -49,8 +53,17 @@ public class UsuariosController {
           loginRequest.getContrasena());
 
       if (usuarioOptional.isPresent()) {
-        LoginResponse.UsuarioDto usuarioDto = new LoginResponse.UsuarioDto(usuarioOptional.get());
-        return ResponseEntity.ok(new LoginResponse(true, "Autenticación exitosa.", usuarioDto));
+        Usuarios usuario = usuarioOptional.get();
+        String roleName = usuario.getRol() != null ? usuario.getRol().getNombre() : "USER";
+
+        // Generar token JWT
+        String token = jwtUtil.generateToken(usuario.getUsuario(), roleName, usuario.getId());
+
+        LoginResponse.UsuarioDto usuarioDto = new LoginResponse.UsuarioDto(usuario);
+        LoginResponse response = new LoginResponse(true, "Autenticación exitosa.", usuarioDto);
+        response.setToken(token);
+
+        return ResponseEntity.ok(response);
       } else {
         return ResponseEntity.status(401)
             .body(new LoginResponse(false, "Usuario o contraseña incorrectos."));
@@ -59,6 +72,60 @@ public class UsuariosController {
     } catch (Exception e) {
       return ResponseEntity.status(500)
           .body(new LoginResponse(false, "Error interno del servidor: " + e.getMessage()));
+    }
+  }
+
+  // Endpoint de registro
+  @PostMapping("/register")
+  public ResponseEntity<String> register(@RequestBody Usuarios usuario) {
+    try {
+      // Validaciones básicas
+      if (usuario.getNombre() == null || usuario.getNombre().isEmpty()) {
+        return ResponseEntity.badRequest().body("El nombre es obligatorio.");
+      }
+
+      if (usuario.getUsuario() == null || usuario.getUsuario().isEmpty()) {
+        return ResponseEntity.badRequest().body("El nombre de usuario es obligatorio.");
+      }
+
+      if (usuario.getContrasena() == null || usuario.getContrasena().isEmpty()) {
+        return ResponseEntity.badRequest().body("La contraseña es obligatoria.");
+      }
+
+      if (usuario.getEmail() == null || usuario.getEmail().isEmpty()) {
+        return ResponseEntity.badRequest().body("El email es obligatorio.");
+      }
+
+      // Verificar unicidad de usuario y email
+      if (!service.isUsuarioUnique(usuario.getUsuario())) {
+        return ResponseEntity.badRequest().body("El nombre de usuario ya existe.");
+      }
+
+      if (!service.isEmailUnique(usuario.getEmail())) {
+        return ResponseEntity.badRequest().body("El email ya está registrado.");
+      }
+
+      // Asignar rol por defecto (GERENTE) si no se especifica
+      if (usuario.getRol() == null || usuario.getRol().getId() == null) {
+        // Buscar el rol de GERENTE por defecto
+        // Nota: Deberías tener un rol con ID 2 para GERENTE en tu base de datos
+        mp.project.gestionrefugios.model.Roles rolGerente = new mp.project.gestionrefugios.model.Roles();
+        rolGerente.setId(2); // Asumiendo que GERENTE tiene ID 2
+        usuario.setRol(rolGerente);
+      }
+
+      // Establecer estado activo por defecto
+      usuario.setEstadoRegistro(true);
+
+      int result = service.saveUsuario(usuario);
+      if (result > 0) {
+        return ResponseEntity.ok("Usuario registrado exitosamente.");
+      } else {
+        return ResponseEntity.status(500).body("Error al registrar el usuario.");
+      }
+
+    } catch (Exception e) {
+      return ResponseEntity.status(500).body("Error interno del servidor: " + e.getMessage());
     }
   }
 
