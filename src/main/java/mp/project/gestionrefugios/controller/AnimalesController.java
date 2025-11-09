@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -35,8 +36,9 @@ public class AnimalesController {
   @Autowired
   private AnimalesService service;
 
-  // Directorio donde se guardarán las imágenes
-  private final String UPLOAD_DIR = "uploads/animales/";
+  // Directorio donde se guardarán las imágenes (inyectado desde application.properties)
+  @Value("${app.upload.dir}")
+  private String UPLOAD_DIR;
 
   @GetMapping("/getByStatus/{status}")
   public ResponseEntity<List<Animales>> getAnimalesByStatus(@PathVariable("status") Boolean status) {

@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -27,6 +28,9 @@ public class SecurityConfig {
 
   @Autowired
   private CustomUserDetailsService userDetailsService;
+
+  @Autowired
+  private CorsConfigurationSource corsConfigurationSource;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -51,11 +55,13 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
         .csrf(csrf -> csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource))
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(authz -> authz
             // Endpoints públicos
             .requestMatchers("/usuarios/login", "/usuarios/register").permitAll()
             .requestMatchers("/actuator/**").permitAll()
+            .requestMatchers("/test/cors").permitAll()
 
             // Endpoints solo para ADMIN
             .requestMatchers("/usuarios/**").hasRole("ADMIN")

@@ -27,10 +27,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       @NonNull FilterChain chain)
       throws ServletException, IOException {
 
+    // Permitir peticiones OPTIONS (preflight) sin procesar JWT
+    if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+      chain.doFilter(request, response);
+      return;
+    }
+
     final String requestTokenHeader = request.getHeader("Authorization");
+    final String requestURI = request.getRequestURI();
+    final String method = request.getMethod();
 
     String username = null;
     String jwtToken = null;
+
+    // Log para depuración (solo en desarrollo)
+    logger.debug("Processing request: " + method + " " + requestURI + " - Authorization: " +
+        (requestTokenHeader != null ? "Present" : "Missing"));
 
     // JWT Token está en el formato "Bearer token". Remover palabra Bearer y obtener
     // solo el Token
@@ -38,9 +50,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       jwtToken = requestTokenHeader.substring(7);
       try {
         username = jwtUtil.extractUsername(jwtToken);
+        logger.debug("Extracted username from token: " + username);
       } catch (Exception e) {
-        logger.error("Unable to get JWT Token", e);
+        logger.error("Unable to get JWT Token for request " + method + " " + requestURI + ": " + e.getMessage());
       }
+    } else {
+      logger.debug("No Authorization header or invalid format for request: " + method + " " + requestURI);
     }
 
     // Una vez que obtengamos el token, validarlo
@@ -51,6 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       if (jwtUtil.isTokenValid(jwtToken)) {
 
         String role = jwtUtil.extractRole(jwtToken);
+        logger.debug("Token valid. User: " + username + " - Role: " + role);
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             username,
@@ -63,8 +79,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         request.setAttribute("userRole", role);
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
+        logger.debug("Authentication set for user: " + username);
+      } else {
+        logger.warn("Invalid JWT token for user: " + username);
       }
     }
+
     chain.doFilter(request, response);
   }
 }
